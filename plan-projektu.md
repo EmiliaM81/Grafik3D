@@ -99,4 +99,10 @@ Sylabus chce opis procesu, dokumentację użytkownika i techniczną pod rozbudow
 
 ## Stan
 
-Na razie jest tylko ten plan. Kod jeszcze nie. Następny krok: szkielet projektu (CMake, GLFW, pusty quad) w tym folderze.
+Zrobione (etapy 1–3 w uproszczeniu):
+- CMake + GLFW/glm (FetchContent) + GLAD w `external/`
+- fullscreen quad, loader shaderów
+- `blackhole.frag` – proceduralny dysk + proste zagięcie tła, uniformy `uTime`, `uResolution`, `uMass`
+- klawisze: `+/-` masa, `[` `]` czas, `R` reset, `Esc`
+
+Następny krok: kamera orbit (mysz + zoom) i podpięcie pozycji kamery do shadera. Potem właściwy port konkretnego demo ze Shadertoy (z podaniem autora w docs).

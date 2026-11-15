@@ -1,6 +1,7 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
+#include "camera.h"
 #include "shader.h"
 
 #include <cmath>
@@ -18,6 +19,11 @@ int gFbW = 1280;
 int gFbH = 720;
 float gMass = 1.0f;
 float gTimeScale = 1.0f;
+OrbitCamera gCam;
+
+bool gDragging = false;
+double gLastX = 0.0;
+double gLastY = 0.0;
 
 void framebufferSizeCallback(GLFWwindow*, int w, int h) {
   gFbW = w;
@@ -47,8 +53,34 @@ void keyCallback(GLFWwindow* window, int key, int, int action, int) {
   } else if (key == GLFW_KEY_R) {
     gMass = 1.0f;
     gTimeScale = 1.0f;
-    std::cout << "reset parametrow\n";
+    gCam.reset();
+    std::cout << "reset kamery i parametrow\n";
   }
+}
+
+void mouseButtonCallback(GLFWwindow* window, int button, int action, int) {
+  if (button != GLFW_MOUSE_BUTTON_LEFT) {
+    return;
+  }
+  if (action == GLFW_PRESS) {
+    gDragging = true;
+    glfwGetCursorPos(window, &gLastX, &gLastY);
+  } else if (action == GLFW_RELEASE) {
+    gDragging = false;
+  }
+}
+
+void cursorPosCallback(GLFWwindow*, double x, double y) {
+  if (!gDragging) {
+    return;
+  }
+  gCam.orbit(static_cast<float>(x - gLastX), static_cast<float>(y - gLastY));
+  gLastX = x;
+  gLastY = y;
+}
+
+void scrollCallback(GLFWwindow*, double, double yOffset) {
+  gCam.zoom(static_cast<float>(yOffset));
 }
 
 // VAO z dwoma trojkatami = fullscreen quad
@@ -97,6 +129,9 @@ int main() {
   glfwSwapInterval(1);
   glfwSetFramebufferSizeCallback(window, framebufferSizeCallback);
   glfwSetKeyCallback(window, keyCallback);
+  glfwSetMouseButtonCallback(window, mouseButtonCallback);
+  glfwSetCursorPosCallback(window, cursorPosCallback);
+  glfwSetScrollCallback(window, scrollCallback);
 
   if (!gladLoadGLLoader(reinterpret_cast<GLADloadproc>(glfwGetProcAddress))) {
     std::cerr << "gladLoadGLLoader failed\n";
@@ -106,7 +141,7 @@ int main() {
   }
 
   std::cout << "OpenGL " << glGetString(GL_VERSION) << "\n";
-  std::cout << "sterowanie: +/- masa, [/] czas, R reset, Esc wyjscie\n";
+  std::cout << "LMB orbit, scroll zoom, +/- masa, [/] czas, R reset, Esc\n";
 
   try {
     const std::string vert = std::string(SHADER_DIR) + "/fullscreen.vert";
@@ -126,10 +161,13 @@ int main() {
       glClearColor(0.f, 0.f, 0.f, 1.f);
       glClear(GL_COLOR_BUFFER_BIT);
 
+      const glm::vec3 eye = gCam.position();
+
       shader.use();
       shader.setFloat("uTime", simTime);
       shader.setVec2("uResolution", static_cast<float>(gFbW), static_cast<float>(gFbH));
       shader.setFloat("uMass", gMass);
+      shader.setVec3("uCamPos", eye.x, eye.y, eye.z);
 
       glBindVertexArray(quad);
       glDrawArrays(GL_TRIANGLES, 0, 6);

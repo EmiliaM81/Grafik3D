@@ -1,7 +1,7 @@
 # Grafika 3D – czarna dziura
 
 Projekt zaliczeniowy z Grafiki 3D (OpenGL).  
-Wizualizacja soczewkowania wokół czarnej dziury: dysk, zagięte tło, parametry z klawiatury. Shader GLSL, Linux.
+Wizualizacja soczewkowania wokół czarnej dziury: dysk, zagięte tło, kamera orbit, parametry z klawiatury. Shader GLSL, Linux.
 
 Więcej w `plan-projektu.md`.
 
@@ -35,19 +35,19 @@ cmake --build .
 
 Ścieżki do `shaders/` są wklejane przy kompilacji (`SHADER_DIR`), więc możesz odpalać z `build/`.
 
-## Sterowanie (na razie)
+## Sterowanie
 
+- LMB + przeciąganie – obrót kamery wokół dziury
+- scroll – zoom
 - `+` / `-` – masa / siła „soczewki”
 - `[` / `]` – prędkość czasu
-- `R` – reset parametrów
+- `R` – reset kamery i parametrów
 - `Esc` – wyjście
-
-Kamera orbit (mysz + zoom) jeszcze nie – to następny etap.
 
 ## Struktura
 
 ```
-src/main.cpp, shader.*
+src/main.cpp, shader.*, camera.*
 shaders/fullscreen.vert, blackhole.frag
 external/glad/, external/x11_extra/
 ```
@@ -60,5 +60,5 @@ git@github.com:EmiliaM81/Grafik3D.git
 
 ## Status
 
-Działa szkielet: okno GLFW, fullscreen quad, proceduralny shader czarnej dziury + `uTime` / `uResolution` / `uMass`.  
-Dalej: kamera orbit, porządniejszy port ze Shadertoy, opcjonalnie cząstki.
+Działa okno + quad + shader z dyskiem i prostym zagięciem promieni, kamera orbit (`uCamPos`), parametry na klawiszach.  
+Dalej: porządniejszy port ze Shadertoy (z autorem w docs), opcjonalnie cząstki, docs zaliczeniowe.

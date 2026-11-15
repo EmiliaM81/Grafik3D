@@ -1,73 +1,130 @@
 #version 330 core
 
-// uproszczona wizualizacja czarnej dziury (bez tekstur):
-// proceduralny dysk + proste zagiecie tla wokól horyzontu.
-// pozniej mozna podmienic na porcie z konkretnego Shadertoy.
+// Rs=1, a=-1.5 h^2 x/r^5, Verlet bez normalize vel.
+// dysk w y=0: przod zaslania dziure, tyl wychodzi lukiem nad/pod.
 
 in vec2 vUv;
 out vec4 FragColor;
 
 uniform float uTime;
 uniform vec2 uResolution;
-uniform float uMass; // 0.5 .. 2.0, skaluje horyzont / sile "soczewki"
+uniform float uMass;
+uniform vec3 uCamPos;
 
 float hash(vec2 p) {
   return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
 }
 
-// proste gwiazdy proceduralne
-float stars(vec2 uv) {
-  vec2 g = floor(uv * 45.0);
-  float n = hash(g);
-  float s = step(0.985, n);
-  float tw = 0.6 + 0.4 * sin(uTime * 2.0 + n * 40.0);
-  return s * tw;
+float stars(vec3 d) {
+  d = normalize(d);
+  float s = 0.0;
+  for (int i = 0; i < 3; ++i) {
+    float sc = 44.0 + float(i) * 58.0;
+    vec3 c = floor(d * sc);
+    float n = hash(c.xy + c.z * 5.0 + float(i) * 17.0);
+    if (n > 0.983) {
+      s += smoothstep(0.035, 0.0, length(fract(d * sc) - 0.5))
+         * (0.5 + 0.5 * sin(uTime * 2.0 + n * 40.0));
+    }
+  }
+  return s;
+}
+
+vec3 diskCol(vec2 xz) {
+  float rho = length(xz);
+  float a = atan(xz.y, xz.x);
+  // delikatne pasma, nie ostre kreski
+  float w = a * 2.0 + uTime * 1.2 + 1.5 / max(rho, 0.4);
+  float bands = 0.55 + 0.45 * pow(0.5 + 0.5 * sin(w), 1.5);
+  float t = smoothstep(3.0, 11.0, rho);
+  vec3 c = mix(vec3(2.2, 1.7, 1.0), vec3(1.3, 0.35, 0.05), t);
+  c *= bands;
+  float dop = 0.55 + 0.6 * clamp(xz.x / max(rho, 0.01), -1.0, 1.0);
+  return c * dop * (3.0 / (0.35 + rho));
 }
 
 void main() {
-  // wspolrzedne wycentrowane, aspect z okna
-  vec2 uv = (gl_FragCoord.xy - 0.5 * uResolution) / uResolution.y;
+  vec2 p = (gl_FragCoord.xy - 0.5 * uResolution) / uResolution.y;
 
   float mass = clamp(uMass, 0.4, 2.5);
-  float rH = 0.11 * mass; // "horyzont"
-  float r = length(uv);
-  float a = atan(uv.y, uv.x);
+  float RsWorld = 0.5 * mass;
+  vec3 ro = uCamPos / RsWorld;
 
-  // lekke zagiecie kata / promienia (udawane soczewkowanie)
-  float warp = (0.09 * mass) / (r * r + 0.012);
-  float bent = a + warp * 0.55;
-  float rBent = r - warp * 0.02;
+  const float rH = 1.0;
+  const float rIn = 2.8;
+  const float rOut = 12.0;
 
-  // tlo gwiazd w zagietych wspolrzednych
-  vec2 starUv = vec2(cos(bent), sin(bent)) * max(rBent, 0.001);
-  vec3 col = vec3(0.01, 0.015, 0.04);
-  col += stars(starUv + vec2(0.0, uTime * 0.01)) * 0.85;
-  col += stars(starUv * 1.7 + 3.1) * 0.35;
+  vec3 ww = normalize(-ro);
+  vec3 up = abs(ww.y) > 0.9 ? vec3(0.0, 0.0, 1.0) : vec3(0.0, 1.0, 0.0);
+  vec3 uu = normalize(cross(ww, up));
+  vec3 vv = cross(uu, ww);
+  vec3 rd = normalize(p.x * uu + p.y * vv + 2.0 * ww);
 
-  // dysk akrecyjny (pierscien)
-  float diskInner = rH * 1.55;
-  float diskOuter = rH * 4.2;
-  float disk = smoothstep(diskInner, diskInner + 0.025, r)
-             * smoothstep(diskOuter, diskOuter - 0.08, r);
+  float h2 = dot(cross(ro, rd), cross(ro, rd));
 
-  // jasniejsze "pasma" + rotacja
-  float spin = bent * 3.0 + uTime * (1.4 / max(mass, 0.5)) + 1.2 / max(r, 0.05);
-  float bands = pow(0.5 + 0.5 * sin(spin), 2.5);
-  float heat = disk * (0.35 + 0.65 * bands);
+  vec3 col = vec3(0.01, 0.012, 0.03);
+  float transm = 1.0;
+  bool captured = false;
 
-  vec3 diskCol = mix(vec3(0.7, 0.15, 0.02), vec3(1.4, 0.85, 0.35), bands);
-  col += diskCol * heat;
+  vec3 pos = ro;
+  vec3 vel = rd;
+  float yPrev = pos.y;
+  int hits = 0;
 
-  // cienki pierscien przy horyzoncie
-  float ring = exp(-abs(r - rH * 1.15) * (70.0 / mass));
-  col += ring * vec3(0.55, 0.7, 1.0) * 0.55 * (1.0 - smoothstep(rH, rH * 0.85, r));
+  for (int i = 0; i < 450; ++i) {
+    float r2 = dot(pos, pos);
+    float r = sqrt(r2);
 
-  // event horizon
-  float horizon = smoothstep(rH, rH * 0.82, r);
-  col *= horizon;
+    if (r < rH) {
+      captured = true;
+      break;
+    }
+    if (r > 70.0 || transm < 0.015) break;
 
-  // delikatny vignette
-  col *= 1.0 - 0.25 * length(uv);
+    float dt = clamp(0.045 * r, 0.02, 0.12);
 
-  FragColor = vec4(col, 1.0);
+    vec3 accel = (-1.5 * h2) * pos / (r2 * r2 * r);
+    pos += vel * dt + 0.5 * accel * dt * dt;
+
+    float r2n = dot(pos, pos);
+    float rn = sqrt(r2n);
+    if (rn < rH) {
+      captured = true;
+      break;
+    }
+    vec3 accel2 = (-1.5 * h2) * pos / (r2n * r2n * rn);
+    vel += 0.5 * (accel + accel2) * dt;
+
+    float y = pos.y;
+    // tylko przy przecieciu plaszczyzny (nie co krok w slabie = bez paskow)
+    if (yPrev * y <= 0.0 && transm > 0.02 && hits < 6) {
+      float f = abs(yPrev) / (abs(yPrev) + abs(y) + 1e-6);
+      vec3 hit = mix(pos - vel * dt, pos, f); // przyblizenie
+      // dokladniej: interpolacja po y
+      hit = vec3(
+          mix((pos - vel * dt).x, pos.x, f),
+          0.0,
+          mix((pos - vel * dt).z, pos.z, f));
+
+      float rho = length(hit.xz);
+      if (rho > rIn && rho < rOut) {
+        float m = smoothstep(rIn, rIn + 0.5, rho)
+                * smoothstep(rOut, rOut - 1.2, rho);
+        vec3 emit = diskCol(hit.xz) * m;
+        // pierwsze trafienie = dysk z przodu; kolejne = luk z tylu (tez jasny)
+        float dens = (hits == 0) ? 0.85 * m : 0.7 * m;
+        col += transm * emit * dens;
+        transm *= (1.0 - dens * 0.4);
+        hits++;
+      }
+    }
+    yPrev = y;
+  }
+
+  if (!captured) {
+    col += transm * (stars(vel) + vec3(0.012, 0.016, 0.04));
+  }
+
+  col = 1.0 - exp(-col);
+  FragColor = vec4(clamp(col, 0.0, 1.0), 1.0);
 }

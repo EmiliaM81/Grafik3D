@@ -99,10 +99,10 @@ Sylabus chce opis procesu, dokumentację użytkownika i techniczną pod rozbudow
 
 ## Stan
 
-Zrobione (etapy 1–3 w uproszczeniu):
+Zrobione (etapy 1–5 w uproszczeniu):
 - CMake + GLFW/glm (FetchContent) + GLAD w `external/`
-- fullscreen quad, loader shaderów
-- `blackhole.frag` – proceduralny dysk + proste zagięcie tła, uniformy `uTime`, `uResolution`, `uMass`
-- klawisze: `+/-` masa, `[` `]` czas, `R` reset, `Esc`
+- fullscreen quad, loader shaderów, `OrbitCamera` (LMB + scroll)
+- `blackhole.frag` – promienie z kamery, dysk w XZ, proste zagięcie, uniformy m.in. `uCamPos`, `uMass`
+- klawisze: `+/-` masa, `[` `]` czas, `R` reset kamery/parametrów, `Esc`
 
-Następny krok: kamera orbit (mysz + zoom) i podpięcie pozycji kamery do shadera. Potem właściwy port konkretnego demo ze Shadertoy (z podaniem autora w docs).
+Następny krok: właściwy port konkretnego demo ze Shadertoy (autor w docs), potem bonus cząstki / docs zaliczeniowe.

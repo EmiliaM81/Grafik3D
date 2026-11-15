@@ -1,43 +1,19 @@
-# Dokumentacja techniczna (skrót)
+# Dokumentacja techniczna
 
-Aplikacja C++17 + OpenGL 3.3 core. Okno i input przez GLFW, funkcje GL przez GLAD, wektory przez glm. Budowanie: CMake.
+C++17, OpenGL 3.3 core, GLFW, GLAD, glm, CMake (FetchContent na GLFW/glm jak trzeba).
 
-## Przepływ klatki
+Okno i input przez GLFW. Co klatke: update czastek na CPU, ustawienie uniformow, rysowanie jednego fullscreen quada (2 trojkaty). Vertex prawie nic nie robi – caly obraz liczy fragment shader (ray marching / geodezyjna fotonu).
 
-1. GLFW poll + update cząstek na CPU (Verlet).
-2. Clear, ustawienie uniformów w programie GLSL.
-3. Rysowanie fullscreen quada (2 trójkąty). Cały obraz liczy fragment shader.
+Wazniejsze uniformy: `uTime`, `uResolution` (jak iTime/iResolution), `uCamPos`, `uMass`, `uQuality`, `uDoppler`, oraz `uShowParts` / `uParticles[8]` pod bonus.
 
-Vertex shader prawie nic nie robi. Cała scena to ray marching / całkowanie geodezyjnej fotonu we fragmencie.
+W shaderze Rs = 1. Kamera skalowana przez `RsWorld = 0.5 * uMass`. Przyspieszenie fotonu (Binet):
 
-## Uniformy (ważniejsze)
+`a = -1.5 * h² * x / r⁵`
 
-- `uTime`, `uResolution` – jak iTime / iResolution ze Shadertoy
-- `uCamPos` – pozycja kamery orbit
-- `uMass` – skala Rs / siła zagięcia
-- `uQuality` – limit kroków
-- `uDoppler`, `uShowParts`, `uParticles[]` – efekty i bonus
+Verlet, limit krokow z `uQuality`. Dysk w `y=0` – przod zaslania dziure, tyl wychodzi lukiem. Pod horyzontem czern, jak ucieknie to gwiazdy proceduralne + photon ring ~1.5 Rs. To nie jest pelna OTW ani Kerr, tylko model wizualny.
 
-## Model w shaderze
+Kamera: `OrbitCamera` (yaw/pitch + dystans), pozycja do `uCamPos`.
 
-Jednostki: Rs = 1 w przestrzeni całkowania. Promień startuje z kamery, przyspieszenie fotonu w postaci Bineta:
+Czastki: `ParticleSystem` na CPU, Newton + Verlet, start prawie keplerowski. Pozycje do shadera, prosty glow. Wlacznik `P`.
 
-`a = -1.5 * h^2 * x / r^5`
-
-(h^2 z momentu kątowego). Integracja velocity Verlet. Przy przecięciu płaszczyzny y=0 składany jest dysk (kilka obrazów – „łuk” z tyłu). Promień wpadający pod horyzont = czerń. Jak ucieknie – gwiazdy proceduralne + cienki photon ring ~1.5 Rs.
-
-To nie jest pełna OTW ani Kerr. Cel: wygląd jak w typowych demo Shadertoy, z opisem uproszczeń.
-
-## Cząstki (bonus)
-
-`ParticleSystem` na CPU: Newton `a = -GM r / r^3` + Verlet, start prawie-keplerowski. Pozycje idą do shadera jako `uParticles[8]` i są „doklejane” przy marszu promienia (prosty glow).
-
-## Pliki
-
-- `src/main.cpp` – pętla, input, uniformy
-- `src/shader.*` – load/compile GLSL
-- `src/camera.*` – orbit
-- `src/particles.*` – Verlet
-- `shaders/fullscreen.vert`, `shaders/blackhole.frag`
-
-Źródła inspiracji: `docs/zrodla.md`.
+Pliki: `src/main.cpp`, `shader.*`, `camera.*`, `particles.*`, `shaders/fullscreen.vert`, `shaders/blackhole.frag`. Zrodla: `docs/zrodla.md`.

@@ -2,7 +2,7 @@
 
 // Rs=1, a=-1.5 h^2 x/r^5, Verlet.
 // dysk w y=0: przod zaslania dziure, tyl wychodzi lukiem nad/pod.
-// Inspiracja Shadertoy tsBXW3 / Binet — port pod uTime/uResolution/uCamPos.
+// Shadertoy tsBXW3 / Binet, uniformy: uTime, uResolution, uCamPos.
 
 in vec2 vUv;
 out vec4 FragColor;

@@ -8,7 +8,7 @@ Temat roboczy: interaktywna wizualizacja efektów grawitacyjnych wokół czarnej
 
 Na ekranie widać czarną dziurę z dyskiem akrecyjnym i zakrzywionym tłem (soczewkowanie). Da się kręcić kamerą myszą, przybliżać/oddalac, zmieniać parametry (masa, czas, wygląd dysku). Opcjonalnie kilka cząstek na orbitach liczonych numerycznie.
 
-Wymagania z sylabusa pokryte tak: OpenGL + RT, interakcja, potok programowalny (GLSL), potem dokumentacja i prezentacja.
+Wymagania z sylabusa pokryte tak: OpenGL + RT, interakcja, potok programowalny (GLSL), potem dokumentacja.
 
 ## Stack (Linux)
 
@@ -59,7 +59,7 @@ Kolejność mniej więcej taka, żeby zawsze było co uruchomić:
 5. Parametry fizyczne / wizualne na klawiszach.
 6. Bonus: orbitujące cząstki.
 7. Porządki: README jak zbudować i odpalić, sterowanie, screenshoty.
-8. Dokumentacja zaliczeniowa (użytkownika + techniczna) i prezentacja.
+8. Dokumentacja zaliczeniowa (użytkownika + techniczna).
 
 ## Struktura katalogów (plan)
 
@@ -99,12 +99,4 @@ Sylabus chce opis procesu, dokumentację użytkownika i techniczną pod rozbudow
 
 ## Stan
 
-Zrobione (etapy 1–6 + szkic docs):
-- CMake + GLFW/glm (FetchContent) + GLAD w `external/`
-- fullscreen quad, loader shaderów, `OrbitCamera` (LMB + scroll)
-- `blackhole.frag` – port stylu Shadertoy (geodezyjna + dysk + photon ring), uniformy kamery/masy/jakości
-- klawisze: `+/-` masa, `[` `]` czas, `1/2/3` jakość, `D` Doppler, `P` cząstki, `R`, `Esc`
-- bonus: `particles.*` – Verlet na CPU, pozycje do `uParticles[]`
-- `docs/uzytkownik.md`, `techniczna.md`, `zrodla.md` (m.in. tsBXW3)
-
-Następny krok: screenshoty do README, dopieszczenie docs/prezentacji pod oddanie.
+Działa program (etapy 1–7): CMake/GLFW/GLAD, quad + shader (tsBXW3), kamera, klawisze, cząstki Verlet, README, screenshoty, docs użytkownika/techniczna/źródła.

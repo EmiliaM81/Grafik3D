@@ -1,7 +1,8 @@
 #version 330 core
 
-// Rs=1, a=-1.5 h^2 x/r^5, Verlet bez normalize vel.
+// Rs=1, a=-1.5 h^2 x/r^5, Verlet.
 // dysk w y=0: przod zaslania dziure, tyl wychodzi lukiem nad/pod.
+// Inspiracja Shadertoy tsBXW3 / Binet — port pod uTime/uResolution/uCamPos.
 
 in vec2 vUv;
 out vec4 FragColor;
@@ -10,6 +11,11 @@ uniform float uTime;
 uniform vec2 uResolution;
 uniform float uMass;
 uniform vec3 uCamPos;
+uniform int uQuality;
+uniform int uDoppler;
+uniform int uShowParts;
+uniform int uPartCount;
+uniform vec3 uParticles[8];
 
 float hash(vec2 p) {
   return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
@@ -33,14 +39,16 @@ float stars(vec3 d) {
 vec3 diskCol(vec2 xz) {
   float rho = length(xz);
   float a = atan(xz.y, xz.x);
-  // delikatne pasma, nie ostre kreski
   float w = a * 2.0 + uTime * 1.2 + 1.5 / max(rho, 0.4);
   float bands = 0.55 + 0.45 * pow(0.5 + 0.5 * sin(w), 1.5);
   float t = smoothstep(3.0, 11.0, rho);
   vec3 c = mix(vec3(2.2, 1.7, 1.0), vec3(1.3, 0.35, 0.05), t);
   c *= bands;
-  float dop = 0.55 + 0.6 * clamp(xz.x / max(rho, 0.01), -1.0, 1.0);
-  return c * dop * (3.0 / (0.35 + rho));
+  if (uDoppler != 0) {
+    float dop = 0.55 + 0.6 * clamp(xz.x / max(rho, 0.01), -1.0, 1.0);
+    c *= max(dop, 0.35);
+  }
+  return c * (3.0 / (0.35 + rho));
 }
 
 void main() {
@@ -66,12 +74,18 @@ void main() {
   float transm = 1.0;
   bool captured = false;
 
+  int maxSteps = 300;
+  if (uQuality >= 2) maxSteps = 450;
+  if (uQuality >= 3) maxSteps = 600;
+
   vec3 pos = ro;
   vec3 vel = rd;
   float yPrev = pos.y;
   int hits = 0;
 
-  for (int i = 0; i < 450; ++i) {
+  for (int i = 0; i < 600; ++i) {
+    if (i >= maxSteps) break;
+
     float r2 = dot(pos, pos);
     float r = sqrt(r2);
 
@@ -82,6 +96,7 @@ void main() {
     if (r > 70.0 || transm < 0.015) break;
 
     float dt = clamp(0.045 * r, 0.02, 0.12);
+    vec3 pos0 = pos;
 
     vec3 accel = (-1.5 * h2) * pos / (r2 * r2 * r);
     pos += vel * dt + 0.5 * accel * dt * dt;
@@ -96,22 +111,17 @@ void main() {
     vel += 0.5 * (accel + accel2) * dt;
 
     float y = pos.y;
-    // tylko przy przecieciu plaszczyzny (nie co krok w slabie = bez paskow)
+    // tylko przy przecieciu plaszczyzny
     if (yPrev * y <= 0.0 && transm > 0.02 && hits < 6) {
       float f = abs(yPrev) / (abs(yPrev) + abs(y) + 1e-6);
-      vec3 hit = mix(pos - vel * dt, pos, f); // przyblizenie
-      // dokladniej: interpolacja po y
-      hit = vec3(
-          mix((pos - vel * dt).x, pos.x, f),
-          0.0,
-          mix((pos - vel * dt).z, pos.z, f));
+      vec3 hit = mix(pos0, pos, f);
+      hit.y = 0.0;
 
       float rho = length(hit.xz);
       if (rho > rIn && rho < rOut) {
         float m = smoothstep(rIn, rIn + 0.5, rho)
                 * smoothstep(rOut, rOut - 1.2, rho);
         vec3 emit = diskCol(hit.xz) * m;
-        // pierwsze trafienie = dysk z przodu; kolejne = luk z tylu (tez jasny)
         float dens = (hits == 0) ? 0.85 * m : 0.7 * m;
         col += transm * emit * dens;
         transm *= (1.0 - dens * 0.4);
@@ -119,6 +129,18 @@ void main() {
       }
     }
     yPrev = y;
+
+    if (uShowParts != 0 && uPartCount > 0) {
+      for (int k = 0; k < 8; ++k) {
+        if (k >= uPartCount) break;
+        vec3 pp = uParticles[k] / RsWorld;
+        float d = length(pos - pp);
+        if (d < 0.18) {
+          float g = smoothstep(0.18, 0.0, d);
+          col += transm * vec3(1.3, 1.05, 0.5) * g * 0.9;
+        }
+      }
+    }
   }
 
   if (!captured) {

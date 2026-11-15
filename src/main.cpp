@@ -2,8 +2,10 @@
 #include <GLFW/glfw3.h>
 
 #include "camera.h"
+#include "particles.h"
 #include "shader.h"
 
+#include <algorithm>
 #include <cmath>
 #include <iostream>
 #include <stdexcept>
@@ -19,7 +21,11 @@ int gFbW = 1280;
 int gFbH = 720;
 float gMass = 1.0f;
 float gTimeScale = 1.0f;
+int gQuality = 2;
+int gDoppler = 1;
+bool gShowParts = true;
 OrbitCamera gCam;
+ParticleSystem gParts;
 
 bool gDragging = false;
 double gLastX = 0.0;
@@ -50,10 +56,29 @@ void keyCallback(GLFWwindow* window, int key, int, int action, int) {
   } else if (key == GLFW_KEY_LEFT_BRACKET) {
     gTimeScale = std::max(0.0f, gTimeScale - 0.1f);
     std::cout << "predkosc czasu: " << gTimeScale << "\n";
+  } else if (key == GLFW_KEY_1) {
+    gQuality = 1;
+    std::cout << "jakosc: 1 (lekka)\n";
+  } else if (key == GLFW_KEY_2) {
+    gQuality = 2;
+    std::cout << "jakosc: 2\n";
+  } else if (key == GLFW_KEY_3) {
+    gQuality = 3;
+    std::cout << "jakosc: 3 (wiecej krokow)\n";
+  } else if (key == GLFW_KEY_D) {
+    gDoppler = 1 - gDoppler;
+    std::cout << "doppler: " << (gDoppler ? "on" : "off") << "\n";
+  } else if (key == GLFW_KEY_P) {
+    gShowParts = !gShowParts;
+    std::cout << "czastki: " << (gShowParts ? "on" : "off") << "\n";
   } else if (key == GLFW_KEY_R) {
     gMass = 1.0f;
     gTimeScale = 1.0f;
+    gQuality = 2;
+    gDoppler = 1;
+    gShowParts = true;
     gCam.reset();
+    gParts.reset(gMass);
     std::cout << "reset kamery i parametrow\n";
   }
 }
@@ -141,13 +166,16 @@ int main() {
   }
 
   std::cout << "OpenGL " << glGetString(GL_VERSION) << "\n";
-  std::cout << "LMB orbit, scroll zoom, +/- masa, [/] czas, R reset, Esc\n";
+  std::cout << "LMB orbit, scroll zoom, +/- masa, [/] czas\n";
+  std::cout << "1/2/3 jakosc, D doppler, P czastki, R reset, Esc\n";
 
   try {
     const std::string vert = std::string(SHADER_DIR) + "/fullscreen.vert";
     const std::string frag = std::string(SHADER_DIR) + "/blackhole.frag";
     Shader shader(vert, frag);
     const unsigned int quad = makeFullscreenQuad();
+
+    gParts.reset(gMass);
 
     float simTime = 0.f;
     float last = static_cast<float>(glfwGetTime());
@@ -157,6 +185,8 @@ int main() {
       const float dt = now - last;
       last = now;
       simTime += dt * gTimeScale;
+
+      gParts.update(dt * gTimeScale, gMass);
 
       glClearColor(0.f, 0.f, 0.f, 1.f);
       glClear(GL_COLOR_BUFFER_BIT);
@@ -168,6 +198,18 @@ int main() {
       shader.setVec2("uResolution", static_cast<float>(gFbW), static_cast<float>(gFbH));
       shader.setFloat("uMass", gMass);
       shader.setVec3("uCamPos", eye.x, eye.y, eye.z);
+      shader.setInt("uQuality", gQuality);
+      shader.setInt("uDoppler", gDoppler);
+      shader.setInt("uShowParts", gShowParts ? 1 : 0);
+      shader.setInt("uPartCount", static_cast<int>(gParts.count()));
+      for (std::size_t i = 0; i < kMaxParticles; ++i) {
+        const char* names[] = {
+            "uParticles[0]", "uParticles[1]", "uParticles[2]", "uParticles[3]",
+            "uParticles[4]", "uParticles[5]", "uParticles[6]", "uParticles[7]",
+        };
+        const glm::vec3& p = gParts.position(i);
+        shader.setVec3(names[i], p.x, p.y, p.z);
+      }
 
       glBindVertexArray(quad);
       glDrawArrays(GL_TRIANGLES, 0, 6);

@@ -1,9 +1,9 @@
 # Grafika 3D – czarna dziura
 
 Projekt zaliczeniowy z Grafiki 3D (OpenGL).  
-Wizualizacja soczewkowania wokół czarnej dziury: dysk, zagięte tło, kamera orbit, parametry z klawiatury. Shader GLSL, Linux.
+Wizualizacja soczewkowania wokół czarnej dziury: dysk, zagięte tło, kamera orbit, parametry z klawiatury, bonus cząstki. Shader GLSL (styl Shadertoy), Linux.
 
-Więcej w `plan-projektu.md`.
+Więcej w `plan-projektu.md`. Docs zaliczeniowe: `docs/`.
 
 ## Stack
 
@@ -12,8 +12,6 @@ Więcej w `plan-projektu.md`.
 - CMake (GLFW/glm ściąga przez FetchContent, jak nie ma w systemie)
 
 ## Zależności (Ubuntu/Debian)
-
-Najwygodniej:
 
 ```bash
 sudo apt install build-essential cmake libglfw3-dev libglm-dev libxinerama-dev
@@ -41,14 +39,18 @@ cmake --build .
 - scroll – zoom
 - `+` / `-` – masa / siła „soczewki”
 - `[` / `]` – prędkość czasu
+- `1` / `2` / `3` – jakość (kroki w shaderze)
+- `D` – Doppler na dysku
+- `P` – orbitujące cząstki
 - `R` – reset kamery i parametrów
 - `Esc` – wyjście
 
 ## Struktura
 
 ```
-src/main.cpp, shader.*, camera.*
+src/main.cpp, shader.*, camera.*, particles.*
 shaders/fullscreen.vert, blackhole.frag
+docs/uzytkownik.md, techniczna.md, zrodla.md
 external/glad/, external/x11_extra/
 ```
 
@@ -60,5 +62,5 @@ git@github.com:EmiliaM81/Grafik3D.git
 
 ## Status
 
-Działa okno + quad + shader z dyskiem i prostym zagięciem promieni, kamera orbit (`uCamPos`), parametry na klawiszach.  
-Dalej: porządniejszy port ze Shadertoy (z autorem w docs), opcjonalnie cząstki, docs zaliczeniowe.
+Działa shader w stylu Shadertoy (port + atrybucja w `docs/zrodla.md`), kamera, klawisze, cząstki Verlet.  
+Dalej: screenshoty / prezentacja, dopieszczanie docs pod oddanie.

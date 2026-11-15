@@ -99,10 +99,12 @@ Sylabus chce opis procesu, dokumentację użytkownika i techniczną pod rozbudow
 
 ## Stan
 
-Zrobione (etapy 1–5 w uproszczeniu):
+Zrobione (etapy 1–6 + szkic docs):
 - CMake + GLFW/glm (FetchContent) + GLAD w `external/`
 - fullscreen quad, loader shaderów, `OrbitCamera` (LMB + scroll)
-- `blackhole.frag` – promienie z kamery, dysk w XZ, proste zagięcie, uniformy m.in. `uCamPos`, `uMass`
-- klawisze: `+/-` masa, `[` `]` czas, `R` reset kamery/parametrów, `Esc`
+- `blackhole.frag` – port stylu Shadertoy (geodezyjna + dysk + photon ring), uniformy kamery/masy/jakości
+- klawisze: `+/-` masa, `[` `]` czas, `1/2/3` jakość, `D` Doppler, `P` cząstki, `R`, `Esc`
+- bonus: `particles.*` – Verlet na CPU, pozycje do `uParticles[]`
+- `docs/uzytkownik.md`, `techniczna.md`, `zrodla.md` (m.in. tsBXW3)
 
-Następny krok: właściwy port konkretnego demo ze Shadertoy (autor w docs), potem bonus cząstki / docs zaliczeniowe.
+Następny krok: screenshoty do README, dopieszczenie docs/prezentacji pod oddanie.

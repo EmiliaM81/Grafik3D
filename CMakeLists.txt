@@ -42,6 +42,7 @@ add_executable(blackhole
   src/main.cpp
   src/shader.cpp
   src/camera.cpp
+  src/particles.cpp
 )
 
 target_include_directories(blackhole PRIVATE src)

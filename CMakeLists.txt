@@ -43,9 +43,13 @@ add_executable(blackhole
   src/shader.cpp
   src/camera.cpp
   src/particles.cpp
+  src/hud.cpp
 )
 
-target_include_directories(blackhole PRIVATE src)
+target_include_directories(blackhole PRIVATE
+  src
+  external/stb
+)
 target_link_libraries(blackhole PRIVATE glad glfw glm::glm)
 
 # na Linuxie OpenGL z systemu

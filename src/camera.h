@@ -11,8 +11,14 @@ public:
   // yaw/pitch w radianach, dystans od srodka
   void reset();
 
+  // gotowe ujecie (yaw, pitch, dystans)
+  void setView(float yaw, float pitch, float distance);
+
   // przesuniecie myszy przy trzymanym LMB (piksele)
   void orbit(float dx, float dy);
+
+  // auto-obrot wokol osi Y (radiany)
+  void addYaw(float dyaw);
 
   // scroll: dodatni = przybliz
   void zoom(float scrollY);

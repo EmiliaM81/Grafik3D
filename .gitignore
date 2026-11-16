@@ -5,4 +5,5 @@ cmake-build-*/
 *.o
 *.a
 *.so
+*.ppm
 .DS_Store

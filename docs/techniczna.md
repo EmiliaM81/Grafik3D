@@ -1,19 +1,19 @@
 # Dokumentacja techniczna
 
-C++17, OpenGL 3.3 core, GLFW, GLAD, glm, CMake (FetchContent na GLFW/glm jak trzeba).
+C++17, OpenGL 3.3 core, GLFW, GLAD, glm, stb_easy_font (HUD), CMake (FetchContent na GLFW/glm jak trzeba).
 
-Okno i input przez GLFW. Co klatke: update czastek na CPU, ustawienie uniformow, rysowanie jednego fullscreen quada (2 trojkaty). Vertex prawie nic nie robi – caly obraz liczy fragment shader (ray marching / geodezyjna fotonu).
+Okno i input przez GLFW. Co klatke: update czastek na CPU, uniformy, fullscreen quad, potem overlay tekstu. Vertex quada prawie nic nie robi – obraz liczy fragment shader. HUD to osobny maly program GLSL + quady ze `stb_easy_font`.
 
-Wazniejsze uniformy: `uTime`, `uResolution` (jak iTime/iResolution), `uCamPos`, `uMass`, `uQuality`, `uDoppler`, oraz `uShowParts` / `uParticles[8]` pod bonus.
+Wazniejsze uniformy: `uTime`, `uResolution`, `uCamPos`, `uMass`, `uQuality`, `uDoppler`, `uFocal`, `uLensing`, `uDiskRIn` / `uDiskROut` / `uDiskTilt`, oraz `uShowParts` / `uParticles[24]` (zolte kropki).
 
-W shaderze Rs = 1. Kamera skalowana przez `RsWorld = 0.5 * uMass`. Przyspieszenie fotonu (Binet):
+W shaderze Rs = 1. Kamera skalowana przez `RsWorld = 0.5 * uMass`. Przyspieszenie fotonu (Binet), wylaczalne przez `uLensing`:
 
 `a = -1.5 * h² * x / r⁵`
 
-Verlet, limit krokow z `uQuality`. Dysk w `y=0` – przod zaslania dziure, tyl wychodzi lukiem. Pod horyzontem czern, jak ucieknie to gwiazdy proceduralne + photon ring ~1.5 Rs. To nie jest pelna OTW ani Kerr, tylko model wizualny.
+Verlet, limit krokow z `uQuality`. Dysk w plaszczyznie po obrocie o `uDiskTilt` wokol X. Pod horyzontem czern, jak ucieknie to gwiazdy proceduralne. To nie jest pelna OTW ani Kerr, tylko model wizualny.
 
-Kamera: `OrbitCamera` (yaw/pitch + dystans), pozycja do `uCamPos`.
+Kamera: `OrbitCamera` (yaw/pitch + dystans), presets (`V`), auto-yaw (`A`), focal w shaderze (Shift+scroll). Screenshot: `glReadPixels` -> PPM. Fullscreen przez `glfwSetWindowMonitor`.
 
-Czastki: `ParticleSystem` na CPU, Newton + Verlet, start prawie keplerowski. Pozycje do shadera, prosty glow. Wlacznik `P`.
+Czastki: `ParticleSystem` na CPU, Newton + Verlet. `setCount` / `spawn` (MMB). Pozycje do shadera, prosty glow.
 
-Pliki: `src/main.cpp`, `shader.*`, `camera.*`, `particles.*`, `shaders/fullscreen.vert`, `shaders/blackhole.frag`. Zrodla: `docs/zrodla.md`.
+Pliki: `src/main.cpp`, `shader.*`, `camera.*`, `particles.*`, `hud.*`, `shaders/fullscreen.vert`, `blackhole.frag`. Zrodla: `docs/zrodla.md`.

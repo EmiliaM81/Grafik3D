@@ -65,18 +65,20 @@ Kolejność mniej więcej taka, żeby zawsze było co uruchomić:
 
 ```
 Grafika3D/
-  plan-projektu.md      <- ten plik
-  README.md             <- jak zbudować / sterowanie (później)
+  plan-projektu.md
+  README.md
   CMakeLists.txt
   src/
     main.cpp
-    shader.cpp / .h     <- wczytywanie i kompilacja GLSL
-    camera.cpp / .h     <- orbit camera
+    shader.cpp / .h
+    camera.cpp / .h
+    particles.cpp / .h
+    hud.cpp / .h        <- stb_easy_font overlay
   shaders/
     fullscreen.vert
     blackhole.frag
-  assets/               <- ewentualnie tekstura tła gwiazd
-  docs/                 <- dokumentacja na zaliczenie
+  external/stb/         <- stb_easy_font.h
+  docs/
 ```
 
 Nazwy plików mogą się lekko zmienić przy pisaniu kodu.
@@ -99,4 +101,12 @@ Sylabus chce opis procesu, dokumentację użytkownika i techniczną pod rozbudow
 
 ## Stan
 
-Działa program (etapy 1–7): CMake/GLFW/GLAD, quad + shader (tsBXW3), kamera, klawisze, cząstki Verlet, README, screenshoty, docs użytkownika/techniczna/źródła.
+Działa program (etapy 1–7 + dopiski z listy poniżej): CMake/GLFW/GLAD, quad + shader (tsBXW3), kamera, klawisze, cząstki Verlet, HUD (`stb_easy_font`), README, screenshoty, docs.
+
+Dorobione potem: HUD + `H`, Spacja pauza, `A` auto-obrót, `V` gotowe ujęcia, Shift+scroll focal, `L` soczewkowanie, MMB / `,` `M` cząstki, `U`/`I` rIn, `T`/`Y` tilt, `F` fullscreen, `F12` PPM.
+
+## Co jeszcze dorobić
+
+Raczej nic obowiązkowego. Ewentualnie jak zostanie czas: ładniejsze screeny do docs, drobne czyszczenie.
+
+Raczej nie: druga dziura / pełny Kerr. Na zintegrowanej i tak ledwo ciągnie, stąd już jest jakość 1/2/3.

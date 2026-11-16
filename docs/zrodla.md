@@ -11,4 +11,4 @@ Wzory: forma Bineta dla fotonu w Schwarzschildzie `a = -3/2 h² x / r⁵`.
 Eric Bruneton – Real-time High-Quality Rendering of Non-Rotating Black Holes (u niego LUT, u mnie numerycznie): https://ebruneton.github.io/black_hole_shader/  
 Neil Bickford – Computational Black Holes + https://www.shadertoy.com/view/4s3SzN
 
-Biblioteki: GLFW, GLAD, glm, CMake. Z ksiazek OpenGL (Redbook / SuperBible) jak cos sie przyda przy opisie potoku.
+Biblioteki: GLFW, GLAD, glm, stb_easy_font (HUD), CMake. Z ksiazek OpenGL (Redbook / SuperBible) jak cos sie przyda przy opisie potoku.

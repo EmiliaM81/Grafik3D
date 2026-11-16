@@ -18,6 +18,13 @@ void OrbitCamera::reset() {
   distance_ = 11.0f;
 }
 
+void OrbitCamera::setView(float yaw, float pitch, float distance) {
+  yaw_ = yaw;
+  const float lim = static_cast<float>(M_PI) * 0.48f;
+  pitch_ = std::clamp(pitch, -lim, lim);
+  distance_ = std::clamp(distance, kMinDist, kMaxDist);
+}
+
 void OrbitCamera::orbit(float dx, float dy) {
   const float sens = 0.005f;
   yaw_ += dx * sens;
@@ -25,6 +32,10 @@ void OrbitCamera::orbit(float dx, float dy) {
 
   const float lim = static_cast<float>(M_PI) * 0.48f;
   pitch_ = std::clamp(pitch_, -lim, lim);
+}
+
+void OrbitCamera::addYaw(float dyaw) {
+  yaw_ += dyaw;
 }
 
 void OrbitCamera::zoom(float scrollY) {

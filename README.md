@@ -8,9 +8,6 @@ wartościami (HUD = nakładka z info, jak w grze). Bonus: małe ciała testowe k
 
 ![widok](docs/screenshots/default.png)
 
-Poniżej jest opis jak to robiłam i jak działa - da się z tego opowiedzieć prezentację.
-
-
 ## O czym to jest
 
 Pokazuję efekty grawitacji wokół czarnej dziury. To nie jest prawdziwa ogólna teoria względności
@@ -50,9 +47,7 @@ Robiłam etapami, żeby zawsze było co odpalić.
 7. Na koniec napisy na ekranie (opis niżej), help na `H`, pauza, auto-obrót,
    gotowe ujęcia kamery, fullscreen, zrzut ekranu do pliku PPM, plus docs i README.
 
-Na słabszej grafice (zintegrowanej) shader bywa wolny. Dlatego jest jakość `Q` (1/2/3) -
-im wyższa, tym więcej kroków liczenia promienia i ładniejszy obraz, ale wolniej.
-Nie robiłam wirującej dziury (Kerr) ani drugiej dziury - i tak ledwo ciągnie.
+Na słabszej grafice (zintegrowanej) shader bywa wolny. Dlatego jest jakość `Q` (1/2/3).
 
 
 ## Jak są zrobione napisy (HUD)
@@ -65,8 +60,8 @@ Potem `Hud::draw` bierze ten string i korzysta z `stb_easy_font` (jeden plik nag
 `stb_easy_font_print` zamienia litery na listę małych prostokątów (każda kreska litery = kwadracik
 z czterema wierzchołkami). Ja te kwadraty dzielę na trójkąty, przeliczam współrzędne z pikseli
 na układ OpenGL (-1..1) i rysuję je osobnym, bardzo prostym programem GLSL:
-vertex tylko ustawia pozycję, fragment maluje prawie białym kolorem. Włączony jest blend
-(przezroczystość), żeby napisy ładnie leżały na obrazie czarnej dziury.
+vertex tylko ustawia pozycję, fragment maluje prawie białym kolorem. Włączony jest blend,
+żeby napisy ładnie leżały na obrazie czarnej dziury.
 
 To osobna warstwa: najpierw cały ekran z dziurą, potem na wierzchu te trójkąty z tekstem.
 Kod jest w `src/hud.cpp`. Po `H` dopinam do stringa skrót klawiszy - ten sam mechanizm.
@@ -77,7 +72,7 @@ Kod jest w `src/hud.cpp`. Po `H` dopinam do stringa skrót klawiszy - ten sam me
 Kolejność w programie jest taka:
 
 1. GLFW trzyma okno i zbiera klawisze/mysz.
-2. GLAD ładuje funkcje OpenGL (bez tego nie wywołasz `glDraw...` nowocześnie).
+2. GLAD ładuje funkcje OpenGL.
 3. Co klatkę:
    - ruszam ciała testowe na CPU,
    - wysyłam parametry do shadera (czas, masa, pozycja kamery, flagi...),
@@ -91,7 +86,7 @@ Cały obraz czarnej dziury liczy fragment shader (`shaders/blackhole.frag`). Dla
 2. Idę tym promieniem małymi krokami w stronę dziury (całkowanie numeryczne, Verlet).
 3. Przy każdym kroku dokłada się zagięcie - wzór z formy Bineta (Schwarzschild, uproszczony):
    `a = -1.5 * h² * x / r⁵`
-   Klawisz `L` to wyłącza. Wtedy to samo ujęcie, ale bez zgiętego światła - widać różnicę.
+   Klawisz `L` to wyłącza. Wtedy to jest to samo ujęcie ale bez zgiętego światła.
 4. Jak promień przetnie płaszczyznę dysku w pierścieniu (między wewnętrznym a zewnętrznym
    promieniem), dodaję kolor dysku. Opcjonalnie Doppler: jedna strona jaśniejsza/czerwieńsza.
 5. Jak wpadnie zbyt blisko środka (pod horyzont zdarzeń) - piksel wychodzi czarny.
@@ -117,17 +112,13 @@ docs/             - docs użytkownika, techniczna, źródła
 external/         - GLAD, stb, zapasowe nagłówki jak system czegoś nie ma
 ```
 
-Jak w systemie nie ma GLFW albo glm, CMake ściąga je przy pierwszym `cmake ..` (trzeba internetu).
-Ścieżka do folderu `shaders/` jest wpisywana przy kompilacji, więc program odpalasz z `build/`.
-
-
 ## Sterowanie (przy demie)
 
 - lewy przycisk myszy - obrót, scroll - zoom
 - `+/-` - masa (siła soczewki)
 - `9`/`0` (albo `[` `]`) - prędkość czasu, Spacja - pauza
 - `Q` - jakość 1-2-3, `D` - Doppler, `L` - soczewkowanie włącz/wyłącz
-- `P` - ciała testowe, `,` mniej, środkowy przycisk myszy - dokładasz kolejne (max 24)
+- `P` - ciała testowe, srodkowy przycisk myszy - dokłada kolejne (max 24)
 - `U` `I` - wewnętrzna krawędź dysku, `T` `Y` - przechylenie dysku
 - `V` - gotowe ujęcie, `A` - kamera sama się kręci
 - `F` - pełny ekran, `F12` - zrzut do pliku `.ppm`
@@ -149,11 +140,11 @@ Jak brakuje Xineramy, jest lokalny folder `external/x11_extra`.
 Opcjonalnie: `./blackhole --selftest` sprawdza logikę klawiszy bez otwierania okna.
 
 
-## Skąd rzeczy
+## Skąd wzielam rzeczy
 
 Główna inspiracja: Shadertoy https://www.shadertoy.com/view/tsBXW3 (Black Hole Accretion).
 Wzór na zagięcie światła: forma Bineta dla fotonu w metryce Schwarzschilda (uproszczona).
-Podglądałam też Erica Brunetona (u niego gotowe tablice, u mnie liczenie krok po kroku)
+Podglądałam też Erica Brunetona (u niego sa gotowe tablice, u mnie natomiast jest liczenie krok po kroku)
 i inne dema black hole - lista w `docs/zrodla.md`.
 
 Biblioteki: GLFW (okno), GLAD (OpenGL), glm (wektory), stb_easy_font (tekst), CMake.

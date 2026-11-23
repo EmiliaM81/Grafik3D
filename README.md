@@ -74,7 +74,7 @@ To osobna warstwa: najpierw cały ekran z dziurą, potem na wierzchu te trójką
 Kod jest w `src/hud.cpp`. Po `H` dopinam do stringa skrót klawiszy - ten sam mechanizm.
 
 
-## Jak to działa (co powiedzieć przy kodzie)
+## Jak to działa 
 
 Kolejność w programie jest taka:
 
@@ -134,12 +134,6 @@ Jak w systemie nie ma GLFW albo glm, CMake ściąga je przy pierwszym `cmake ..`
 - `V` - gotowe ujęcie, `A` - kamera sama się kręci
 - `F` - pełny ekran, `F12` - zrzut do pliku `.ppm`
 - `H` - help, `R` - reset, `Esc` - wyjście
-
-Na polskiej klawiaturze wygodniej `9`/`0` niż nawiasy kwadratowe.
-
-Do pokazania efektu na żywo: zatrzymaj kamerę, wciśnij `L` (bez zagięcia / z zagięciem),
-potem `+/-` i ewentualnie `Q`.
-
 
 ## Budowanie
 

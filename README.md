@@ -1,56 +1,177 @@
-# Grafika 3D – czarna dziura
+# Czarna dziura - soczewkowanie grawitacyjne
 
-Projekt zaliczeniowy z Grafiki 3D. OpenGL, Linux.  
-Na ekranie czarna dziura z dyskiem i soczewkowaniem, kamera mysza, parametry na klawiszach, bonus czastki. Shader GLSL (port ze Shadertoy). Parametry na HUD (`H` = help).
-
-Szczegoly: `plan-projektu.md`, docs w `docs/`.
+Projekt zaliczeniowy z Grafiki 3D. OpenGL na Linuxie.
+Na ekranie widać czarną dziurę, jasny dysk wokół niej i gwiazdy w tle, które się zakrzywiają
+(to właśnie "soczewkowanie" - światło zgina się koło masy).
+Kamerę kręcę myszą, parametry zmieniam klawiszami. W rogu okna jest tekst z aktualnymi
+wartościami (HUD = nakładka z info, jak w grze). Bonus: małe ciała testowe krążące po orbitach.
 
 ![widok](docs/screenshots/default.png)
 
-## Stack
+Poniżej jest opis jak to robiłam i jak działa - da się z tego opowiedzieć prezentację.
 
-C++17, OpenGL 3.3, GLSL, GLFW, GLAD (`external/glad`), glm, stb_easy_font (HUD), CMake.  
-GLFW/glm sciaga sie przez FetchContent jak nie ma w systemie.
 
-## Zaleznosci (Ubuntu/Debian)
+## O czym to jest
 
-```bash
-sudo apt install build-essential cmake libglfw3-dev libglm-dev libxinerama-dev
+Pokazuję efekty grawitacji wokół czarnej dziury. To nie jest prawdziwa ogólna teoria względności
+z uczelni - tylko model wizualny, żeby wyglądało wiarygodnie i chodziło płynnie na laptopie.
+
+Z sylabusa: OpenGL w czasie rzeczywistym, interakcja, shadery GLSL, dokumentacja. To jest.
+
+
+## Jak to powstawało
+
+Robiłam etapami, żeby zawsze było co odpalić.
+
+1. Najpierw samo okno i budowanie projektu.
+   CMake składa program. GLFW to biblioteka od okna, myszy i klawiatury.
+   Na start okno tylko czyściło się na jeden kolor - żeby sprawdzić, że OpenGL w ogóle działa.
+
+2. Zamiast budować scenę z wielu obiektów, rysuję jeden prostokąt na całe okno
+   (w OpenGL to dwa trójkąty sklejone w prostokąt). Na każdym pikselu tego prostokąta
+   odpala się fragment shader - program na GPU, który dla każdego piksela liczy kolor.
+   Na tym etapie był to jeszcze prosty test (np. gradient), żeby sprawdzić że pipeline działa.
+
+3. Potem wrzuciłam właściwy shader czarnej dziury.
+   Bazowałam na demie ze strony Shadertoy (gotowe shadery w przeglądarce), konkretnie `tsBXW3`.
+   Nie da się tego wkleić 1:1 - Shadertoy ma swoje zmienne (`iTime`, `iResolution` itd.),
+   a u mnie okno jest z GLFW, więc podmieniłam to na własne parametry (uniformy),
+   które C++ wysyła co klatkę do GPU. Kamerę też liczę sama w C++, nie jak na Shadertoy.
+
+4. Kamera: lewy przycisk myszy obraca widok wokół dziury, scroll przybliża/oddal a.
+   Pozycja kamery idzie do shadera jako jedna zmienna `uCamPos`.
+
+5. Klawisze do parametrów: masa (siła zagięcia), prędkość czasu, jakość obrazu,
+   efekt Dopplera na dysku, kształt dysku. Żeby na żywo pokazać "co się dzieje jak zmienię X".
+
+6. Bonus: ciała testowe.
+   To nie modele 3D. Pozycje liczę na procesorze (prosta grawitacja Newtona + krok Verlet,
+   czyli numeryczne całkowanie ruchu). Co klatkę wysyłam listę pozycji do shadera
+   (max 24), a shader tylko dorysowuje przy nich jasną plamkę gdy promień przechodzi obok.
+
+7. Na koniec napisy na ekranie (opis niżej), help na `H`, pauza, auto-obrót,
+   gotowe ujęcia kamery, fullscreen, zrzut ekranu do pliku PPM, plus docs i README.
+
+Na słabszej grafice (zintegrowanej) shader bywa wolny. Dlatego jest jakość `Q` (1/2/3) -
+im wyższa, tym więcej kroków liczenia promienia i ładniejszy obraz, ale wolniej.
+Nie robiłam wirującej dziury (Kerr) ani drugiej dziury - i tak ledwo ciągnie.
+
+
+## Jak są zrobione napisy (HUD)
+
+Nie używam czcionek systemowych ani FreeType. Nie ma też tekstury z literami.
+
+Tekst składam w C++ (`buildHudText` w `main.cpp`) - zwykły string z masą, czasem, flagami itd.
+Potem `Hud::draw` bierze ten string i korzysta z `stb_easy_font` (jeden plik nagłówkowy w `external/stb/`).
+
+`stb_easy_font_print` zamienia litery na listę małych prostokątów (każda kreska litery = kwadracik
+z czterema wierzchołkami). Ja te kwadraty dzielę na trójkąty, przeliczam współrzędne z pikseli
+na układ OpenGL (-1..1) i rysuję je osobnym, bardzo prostym programem GLSL:
+vertex tylko ustawia pozycję, fragment maluje prawie białym kolorem. Włączony jest blend
+(przezroczystość), żeby napisy ładnie leżały na obrazie czarnej dziury.
+
+To osobna warstwa: najpierw cały ekran z dziurą, potem na wierzchu te trójkąty z tekstem.
+Kod jest w `src/hud.cpp`. Po `H` dopinam do stringa skrót klawiszy - ten sam mechanizm.
+
+
+## Jak to działa (co powiedzieć przy kodzie)
+
+Kolejność w programie jest taka:
+
+1. GLFW trzyma okno i zbiera klawisze/mysz.
+2. GLAD ładuje funkcje OpenGL (bez tego nie wywołasz `glDraw...` nowocześnie).
+3. Co klatkę:
+   - ruszam ciała testowe na CPU,
+   - wysyłam parametry do shadera (czas, masa, pozycja kamery, flagi...),
+   - rysuję ten jeden prostokąt na całe okno (obraz czarnej dziury),
+   - na wierzchu dorysowuję napisy HUD (trójkąty ze `stb_easy_font`).
+
+Vertex shader (`shaders/fullscreen.vert`) prawie nic nie robi - tylko ustawia narożniki prostokąta.
+Cały obraz czarnej dziury liczy fragment shader (`shaders/blackhole.frag`). Dla każdego piksela:
+
+1. Z pozycji piksela buduję kierunek "promienia światła" wychodzącego z kamery.
+2. Idę tym promieniem małymi krokami w stronę dziury (całkowanie numeryczne, Verlet).
+3. Przy każdym kroku dokłada się zagięcie - wzór z formy Bineta (Schwarzschild, uproszczony):
+   `a = -1.5 * h² * x / r⁵`
+   Klawisz `L` to wyłącza. Wtedy to samo ujęcie, ale bez zgiętego światła - widać różnicę.
+4. Jak promień przetnie płaszczyznę dysku w pierścieniu (między wewnętrznym a zewnętrznym
+   promieniem), dodaję kolor dysku. Opcjonalnie Doppler: jedna strona jaśniejsza/czerwieńsza.
+5. Jak wpadnie zbyt blisko środka (pod horyzont zdarzeń) - piksel wychodzi czarny.
+6. Jak ucieknie daleko - w tle widać gwiazdy (nie z tekstury, tylko wyliczone w shaderze).
+
+W shaderze horyzont ma promień 1. Masa z klawiszy `+/-` skaluje kamerę względem tego,
+więc większa masa = mocniejsze zagięcie i "większa" dziura na ekranie.
+
+Jeszcze raz: to model wizualny, nie pełna OTW. Szczegóły i linki są w `docs/`.
+
+
+## Co siedzi w plikach
+
+```
+src/main.cpp      - start programu, pętla, klawisze/mysz, wysyłanie parametrów, screenshot
+src/shader.*      - wczytanie plików GLSL i kompilacja na GPU
+src/camera.*      - obrót i zoom kamery
+src/particles.*   - orbity ciał testowych na CPU
+src/hud.*         - napisy: stb_easy_font -> trójkąty -> prosty shader
+shaders/fullscreen.vert   - ten prostokąt na całe okno
+shaders/blackhole.frag    - liczenie obrazu czarnej dziury
+docs/             - docs użytkownika, techniczna, źródła
+external/         - GLAD, stb, zapasowe nagłówki jak system czegoś nie ma
 ```
 
-Bez paczek GLFW/glm CMake pobierze je przy `cmake ..` (trzeba sieci).  
-Jak brakuje Xineramy, jest lokalny `external/x11_extra`. Potrzebny tez sterownik OpenGL.
+Jak w systemie nie ma GLFW albo glm, CMake ściąga je przy pierwszym `cmake ..` (trzeba internetu).
+Ścieżka do folderu `shaders/` jest wpisywana przy kompilacji, więc program odpalasz z `build/`.
+
+
+## Sterowanie (przy demie)
+
+- lewy przycisk myszy - obrót, scroll - zoom
+- `+/-` - masa (siła soczewki)
+- `9`/`0` (albo `[` `]`) - prędkość czasu, Spacja - pauza
+- `Q` - jakość 1-2-3, `D` - Doppler, `L` - soczewkowanie włącz/wyłącz
+- `P` - ciała testowe, `,` mniej, środkowy przycisk myszy - dokładasz kolejne (max 24)
+- `U` `I` - wewnętrzna krawędź dysku, `T` `Y` - przechylenie dysku
+- `V` - gotowe ujęcie, `A` - kamera sama się kręci
+- `F` - pełny ekran, `F12` - zrzut do pliku `.ppm`
+- `H` - help, `R` - reset, `Esc` - wyjście
+
+Na polskiej klawiaturze wygodniej `9`/`0` niż nawiasy kwadratowe.
+
+Do pokazania efektu na żywo: zatrzymaj kamerę, wciśnij `L` (bez zagięcia / z zagięciem),
+potem `+/-` i ewentualnie `Q`.
+
 
 ## Budowanie
 
 ```bash
+sudo apt install build-essential cmake libglfw3-dev libglm-dev libxinerama-dev
 mkdir -p build && cd build
 cmake ..
 cmake --build .
 ./blackhole
 ```
 
-Shadery sa podpinane przez `SHADER_DIR` przy kompilacji, wiec odpalasz z `build/`.
+Bez paczek GLFW/glm CMake pobierze je sam (sieć). Potrzebny też sterownik OpenGL.
+Jak brakuje Xineramy, jest lokalny folder `external/x11_extra`.
 
-## Sterowanie
+Opcjonalnie: `./blackhole --selftest` sprawdza logikę klawiszy bez otwierania okna.
 
-- LMB – orbit kamery
-- scroll – zoom, Shift+scroll – ogniskowa
-- `+/-` – masa / sila soczewki
-- `9`/`0` (albo `[` `]`) – predkosc czasu, Spacja – pauza
-- `Q` – jakosc (1-2-3), `D` – Doppler, `L` – soczewkowanie on/off
-- `P` – zolte kropki on/off, `,` mniej, `G`/`M`/MMB – dokladaj (max 24)
-- `U` `I` – rIn dysku, `T` `Y` – tilt
-- `V` – gotowe ujecie, `A` – auto-obrot
-- `F` – fullscreen, `F12` – screenshot PPM
-- `H` – help, `R` – reset, `Esc` – wyjscie
 
-Wiecej screenow: `docs/screenshots/` (orbit, zoom).
+## Skąd rzeczy
 
-## Pliki
+Główna inspiracja: Shadertoy https://www.shadertoy.com/view/tsBXW3 (Black Hole Accretion).
+Wzór na zagięcie światła: forma Bineta dla fotonu w metryce Schwarzschilda (uproszczona).
+Podglądałam też Erica Brunetona (u niego gotowe tablice, u mnie liczenie krok po kroku)
+i inne dema black hole - lista w `docs/zrodla.md`.
 
-`src/` – main, shader, camera, particles, hud  
-`shaders/` – fullscreen.vert, blackhole.frag  
-`docs/` – uzytkownik, techniczna, zrodla  
+Biblioteki: GLFW (okno), GLAD (OpenGL), glm (wektory), stb_easy_font (tekst), CMake.
 
-Repo: `git@github.com:EmiliaM81/Grafik3D.git`
+
+## Docs
+
+- `docs/uzytkownik.md` - jak odpalić i sterować
+- `docs/techniczna.md` - więcej o potoku i wzorach
+- `docs/zrodla.md` - linki
+- `plan-projektu.md` - pierwotny plan
+
+Screeny: `docs/screenshots/` (default, orbit, zoom).

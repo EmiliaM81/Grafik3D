@@ -12,7 +12,6 @@ OrbitCamera::OrbitCamera() {
 }
 
 void OrbitCamera::reset() {
-  // prawie edge-on: jasny pas dysku + luk z tylu nad/pod
   yaw_ = 0.2f;
   pitch_ = 0.22f;
   distance_ = 11.0f;

@@ -2,17 +2,17 @@
 
 Praca semestralna z Grafiki 3D. Aplikacja w OpenGL na Linuxie, grafika w czasie rzeczywistym, interakcja z użytkownikiem, shader GLSL (bazowo ze Shadertoy).
 
-Temat roboczy: interaktywna wizualizacja efektów grawitacyjnych wokół czarnej dziury.
+Temat: wizualizacja efektów grawitacyjnych wokół czarnej dziury.
 
 ## Co ma robić program
 
-Na ekranie widać czarną dziurę z dyskiem akrecyjnym i zakrzywionym tłem (soczewkowanie). Da się kręcić kamerą myszą, przybliżać/oddalac, zmieniać parametry (masa, czas, wygląd dysku). Opcjonalnie kilka cząstek na orbitach liczonych numerycznie.
+Na ekranie widać czarną dziurę z dyskiem akrecyjnym i zakrzywionym tłem (soczewkowanie). Da się kręcić kamerą myszą, przybliżać/oddalac, zmieniać parametry (masa, czas, wygląd dysku). Opcjonalnie kilka ciał testowych na orbitach.
 
-Wymagania z sylabusa pokryte tak: OpenGL + RT, interakcja, potok programowalny (GLSL), potem dokumentacja.
+Z sylabusa: OpenGL w czasie rzeczywistym, interakcja, shadery GLSL, dokumentacja.
 
-## Stack (Linux)
+## Co biorę (Linux)
 
-Nie mam doświadczenia z bibliotekami okienkowymi z labów, więc biorę coś prostego i popularnego:
+Nie mam doświadczenia z bibliotekami okienkowymi z labów, więc biorę coś prostego:
 
 - C++17
 - OpenGL 3.3 core (albo 3.3+), shadery GLSL
@@ -32,9 +32,9 @@ Zależności systemowe (Ubuntu/Debian mniej więcej):
 2. Vertex shader prawie nic nie robi, tylko podaje współrzędne.
 3. Cała magia siedzi we fragment shaderze: raymarching / śledzenie promieni w stronę dziury, dysk, zagięcie światła. Punkt startowy to port shadera ze Shadertoy (trzeba podmienić `iTime`, `iResolution`, `iMouse` na własne uniformy).
 4. Program C++ co klatkę wrzuca uniformy (czas, rozdzielczość, pozycja kamery, masa, flagi efektów) i rysuje quada.
-5. Bonus: na CPU kilka punktów z całowaniem (Verlet albo RK4) pod grawitacją Newtona / orbitą Keplerowską i dorysowanie ich jako punktów/sphere'ów albo jako danych do shadera.
+5. Bonus: na CPU kilka ciał testowych (Verlet) i wrzucenie pozycji do shadera.
 
-Uwaga: pełna ogólna teoria względności to nie jest cel. Robimy uproszczony, wizualny model (jak w typowych demo Shadertoy), ale w dokumentacji trzeba napisać skąd wzory / jakie uproszczenia.
+To nie ma być pełna OTW. Model wizualny jak na Shadertoy, w docs trzeba napisać skąd wzory i co upraszczamy.
 
 ## Interakcja
 
@@ -73,15 +73,15 @@ Grafika3D/
     shader.cpp / .h
     camera.cpp / .h
     particles.cpp / .h
-    hud.cpp / .h        <- stb_easy_font overlay
+    hud.cpp / .h
   shaders/
     fullscreen.vert
     blackhole.frag
-  external/stb/         <- stb_easy_font.h
+  external/stb/
   docs/
 ```
 
-Nazwy plików mogą się lekko zmienić przy pisaniu kodu.
+Nazwy plików mogą się trochę zmienić.
 
 ## Skąd shader
 
@@ -95,18 +95,18 @@ Jeśli wybrany shader okaże się za ciężki, bierzemy prostszy wariant albo ob
 - port ze Shadertoy bywa upierdliwy (różne konwencje, tekstury) -> zaczynamy od wersji bez zewnętrznych tekstur albo z jedną teksturą proceduralną
 - za dużo fizyki na start -> najpierw sam wygląd + kamera, orbity na końcu
 
-## Dokumentacja na zaliczenie (później)
+## Dokumentacja na zaliczenie
 
-Sylabus chce opis procesu, dokumentację użytkownika i techniczną pod rozbudowę. W `docs/` będzie m.in.: temat i cel, jak odpalić, sterowanie, architektura (okno -> uniformy -> shader), skrót modelu (co liczymy, czego nie), źródła (Shadertoy, Redbook/SuperBible jak coś z książek wejdzie).
+Sylabus chce opis procesu, docs użytkownika i techniczną. W `docs/`: jak odpalić, sterowanie, jak to jest zrobione (okno -> uniformy -> shader), skąd wzory, źródła.
 
 ## Stan
 
-Działa program (etapy 1–7 + dopiski z listy poniżej): CMake/GLFW/GLAD, quad + shader (tsBXW3), kamera, klawisze, cząstki Verlet, HUD (`stb_easy_font`), README, screenshoty, docs.
+Działa program (etapy 1-7 + dopiski): CMake/GLFW/GLAD, quad + shader (tsBXW3), kamera, klawisze, ciała testowe Verlet, HUD (`stb_easy_font`), README, screenshoty, docs.
 
-Dorobione potem: HUD + `H`, Spacja pauza, `A` auto-obrót, `V` gotowe ujęcia, Shift+scroll focal, `L` soczewkowanie, MMB / `,` `M` cząstki, `U`/`I` rIn, `T`/`Y` tilt, `F` fullscreen, `F12` PPM.
+Dorobione potem: HUD + `H`, Spacja pauza, `A` auto-obrót, `V` gotowe ujęcia, `L` soczewkowanie, MMB / `,` ciała testowe, `U`/`I` rIn, `T`/`Y` tilt, `F` fullscreen, `F12` PPM.
 
 ## Co jeszcze dorobić
 
-Raczej nic obowiązkowego. Ewentualnie jak zostanie czas: ładniejsze screeny do docs, drobne czyszczenie.
+Raczej nic obowiązkowego. Jak zostanie czas to moze lepsze screeny.
 
-Raczej nie: druga dziura / pełny Kerr. Na zintegrowanej i tak ledwo ciągnie, stąd już jest jakość 1/2/3.
+Nie robie drugiej dziury ani Kerra - na zintegrowanej i tak ledwo ciagnie, stąd jakość 1/2/3.

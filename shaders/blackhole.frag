@@ -1,9 +1,5 @@
 #version 330 core
 
-// Rs=1, a=-1.5 h^2 x/r^5, Verlet.
-// dysk lekko przechylony (uDiskTilt), rIn/rOut z CPU.
-// Shadertoy tsBXW3 / Binet, uniformy: uTime, uResolution, uCamPos.
-
 in vec2 vUv;
 out vec4 FragColor;
 
@@ -16,7 +12,6 @@ uniform int uDoppler;
 uniform int uShowParts;
 uniform int uPartCount;
 uniform vec3 uParticles[24];
-uniform float uFocal;
 uniform int uLensing;
 uniform float uDiskRIn;
 uniform float uDiskROut;
@@ -26,7 +21,6 @@ float hash(vec2 p) {
   return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
 }
 
-// zwykle tlo nieba (stale)
 float stars(vec3 d) {
   d = normalize(d);
   float s = 0.0;
@@ -78,8 +72,7 @@ void main() {
   vec3 up = abs(ww.y) > 0.9 ? vec3(0.0, 0.0, 1.0) : vec3(0.0, 1.0, 0.0);
   vec3 uu = normalize(cross(ww, up));
   vec3 vv = cross(uu, ww);
-  float focal = clamp(uFocal, 0.8, 5.0);
-  vec3 rd = normalize(p.x * uu + p.y * vv + focal * ww);
+  vec3 rd = normalize(p.x * uu + p.y * vv + 2.0 * ww);
 
   float h2 = dot(cross(ro, rd), cross(ro, rd));
 
@@ -150,7 +143,6 @@ void main() {
     }
     yPrev = y;
 
-    // zolte kropki = orbitujace czastki
     if (uShowParts != 0 && uPartCount > 0) {
       for (int k = 0; k < 24; ++k) {
         if (k >= uPartCount) break;

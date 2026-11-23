@@ -8,7 +8,7 @@
 #endif
 
 glm::vec3 ParticleSystem::accel(const glm::vec3& p, float gm) {
-  const float r2 = glm::dot(p, p) + 0.08f;  // softening, zeby nie wybuchalo
+  const float r2 = glm::dot(p, p) + 0.08f;
   const float inv = gm / (r2 * std::sqrt(r2));
   return -p * inv;
 }
@@ -32,7 +32,6 @@ void ParticleSystem::reset(float gm) {
   for (std::size_t i = 0; i < kMaxParticles; ++i) {
     initOne(i, gm);
   }
-  // od razu sporo zoltych kropek (max 24)
   count_ = 16;
 }
 
@@ -60,7 +59,6 @@ void ParticleSystem::spawn(float gm) {
 }
 
 void ParticleSystem::update(float dt, float gm) {
-  // velocity Verlet, male podkroki jak dt duze
   const int sub = std::max(1, static_cast<int>(dt / 0.016f));
   const float h = dt / static_cast<float>(sub);
 
@@ -72,7 +70,6 @@ void ParticleSystem::update(float dt, float gm) {
       vel_[i] += 0.5f * (a0 + a1) * h;
 
       const float r = glm::length(pos_[i]);
-      // wpadlo / ucieklo -> wrzuc z powrotem na orbite
       if (r < 1.2f || r > 18.f) {
         const float ang = static_cast<float>(i) * 0.9f;
         const float rr = 5.0f + static_cast<float>(i) * 0.7f;

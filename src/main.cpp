@@ -37,7 +37,6 @@ bool gPaused = false;
 bool gAutoOrbit = false;
 bool gShowHelp = false;
 bool gLensing = true;
-float gFocal = 2.0f;
 float gDiskRIn = 2.8f;
 float gDiskTilt = 0.0f;
 int gViewPreset = 0;
@@ -62,13 +61,10 @@ void framebufferSizeCallback(GLFWwindow*, int w, int h) {
 void applyViewPreset(int idx) {
   gViewPreset = (idx % 3 + 3) % 3;
   if (gViewPreset == 0) {
-    // z gory
     gCam.setView(0.0f, static_cast<float>(M_PI) * 0.45f, 14.0f);
   } else if (gViewPreset == 1) {
-    // z boku dysku
     gCam.setView(0.0f, 0.05f, 12.0f);
   } else {
-    // domyslne ukosne
     gCam.setView(0.2f, 0.22f, 11.0f);
   }
 }
@@ -92,7 +88,6 @@ void savePpm(const char* path) {
   glPixelStorei(GL_PACK_ALIGNMENT, 1);
   glReadPixels(0, 0, gFbW, gFbH, GL_RGB, GL_UNSIGNED_BYTE, px.data());
 
-  // OpenGL czyta od dolu – odwracamy wiersze
   std::ofstream out(path, std::ios::binary);
   if (!out) {
     std::cerr << "nie moge zapisac " << path << "\n";
@@ -116,7 +111,6 @@ void resetParams() {
   gAutoOrbit = false;
   gShowHelp = false;
   gLensing = true;
-  gFocal = 2.0f;
   gDiskRIn = 2.8f;
   gDiskTilt = 0.0f;
   gViewPreset = 0;
@@ -124,7 +118,6 @@ void resetParams() {
   gParts.reset(gMass);
 }
 
-// hold/repeat OK tylko dla "ciaglych" parametrow; toggle tylko na PRESS
 void keyCallback(GLFWwindow* window, int key, int, int action, int) {
   if (action != GLFW_PRESS && action != GLFW_REPEAT) {
     return;
@@ -138,7 +131,6 @@ void keyCallback(GLFWwindow* window, int key, int, int action, int) {
   } else if (key == GLFW_KEY_MINUS || key == GLFW_KEY_KP_SUBTRACT) {
     gMass = std::max(0.4f, gMass - 0.05f);
   } else if (key == GLFW_KEY_RIGHT_BRACKET || key == GLFW_KEY_0) {
-    // 0 tez, bo [ ] na PL klawiaturze czesto nie istnieja
     gTimeScale = std::min(4.0f, gTimeScale + 0.1f);
   } else if (key == GLFW_KEY_LEFT_BRACKET || key == GLFW_KEY_9) {
     gTimeScale = std::max(0.0f, gTimeScale - 0.1f);
@@ -162,12 +154,6 @@ void keyCallback(GLFWwindow* window, int key, int, int action, int) {
     if (gParts.count() > 0) {
       gParts.setCount(gParts.count() - 1, gMass);
     }
-  } else if (key == GLFW_KEY_M || key == GLFW_KEY_G) {
-    // G / M = kolejna zolta kropka na orbicie
-    gParts.spawn(gMass);
-    gShowParts = true;
-  } else if (key == GLFW_KEY_SLASH || key == GLFW_KEY_PERIOD) {
-    // celowo nic – na PL . i / to ten sam klawisz i tylko myli
   } else if (key == GLFW_KEY_U) {
     gDiskRIn = std::max(1.6f, gDiskRIn - 0.15f);
   } else if (key == GLFW_KEY_I) {
@@ -208,18 +194,10 @@ void cursorPosCallback(GLFWwindow*, double x, double y) {
   gLastY = y;
 }
 
-void scrollCallback(GLFWwindow* window, double, double yOffset) {
-  const bool shift = glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS ||
-                     glfwGetKey(window, GLFW_KEY_RIGHT_SHIFT) == GLFW_PRESS;
-  if (shift) {
-    gFocal *= (yOffset > 0.0) ? 1.08f : (1.f / 1.08f);
-    gFocal = std::clamp(gFocal, 0.8f, 5.0f);
-  } else {
-    gCam.zoom(static_cast<float>(yOffset));
-  }
+void scrollCallback(GLFWwindow*, double, double yOffset) {
+  gCam.zoom(static_cast<float>(yOffset));
 }
 
-// VAO z dwoma trojkatami = fullscreen quad
 unsigned int makeFullscreenQuad() {
   const float verts[] = {
       -1.f, -1.f,
@@ -255,21 +233,19 @@ std::string buildHudText(float simTime) {
      << "  doppler " << (gDoppler ? "on" : "off")
      << "  lens " << (gLensing ? "on" : "off")
      << "\n"
-     << "czastki " << (gShowParts ? "on" : "off")
+     << "ciala test. " << (gShowParts ? "on" : "off")
      << " n=" << gParts.count()
      << "  rIn " << gDiskRIn
      << "  tilt " << gDiskTilt
-     << "\n"
-     << "focal " << gFocal
      << (gAutoOrbit ? "  auto" : "")
      << "   H=help";
 
   if (gShowHelp) {
     ss << "\n\n"
-       << "LMB orbit  scroll zoom  Shift+scroll focal\n"
+       << "LMB orbit  scroll zoom\n"
        << "+- masa  9 0 czas  Spacja pauza  A auto\n"
        << "Q jakosc  D doppler  L lensing\n"
-       << "P zolte kropki  , mniej  G lub M wiecej  MMB nowe\n"
+       << "P ciala testowe  ,  MMB wiecej cial testowych\n"
        << "U I rIn  T Y tilt  V ujecie\n"
        << "F full  F12 ppm  R reset  Esc";
   }
@@ -280,7 +256,6 @@ bool nearly(float a, float b, float eps = 0.001f) {
   return std::fabs(a - b) < eps;
 }
 
-// bez okna: sprawdza czy callback ustawia stany jak trzeba
 int runLogicSelftest() {
   int fails = 0;
   auto expect = [&](bool ok, const char* name) {
@@ -313,7 +288,6 @@ int runLogicSelftest() {
   keyCallback(nullptr, GLFW_KEY_Q, 0, GLFW_PRESS, 0);
   expect(gQuality == 2, "jakosc Q->2");
 
-  // REPEAT nie może przełączać toggle
   const int dop0 = gDoppler;
   keyCallback(nullptr, GLFW_KEY_D, 0, GLFW_PRESS, 0);
   expect(gDoppler == 1 - dop0, "doppler press");
@@ -345,8 +319,6 @@ int runLogicSelftest() {
   gParts.setCount(10, gMass);
   keyCallback(nullptr, GLFW_KEY_COMMA, 0, GLFW_PRESS, 0);
   expect(gParts.count() == 9, "parts comma");
-  keyCallback(nullptr, GLFW_KEY_G, 0, GLFW_PRESS, 0);
-  expect(gParts.count() == 10, "parts G");
   gParts.setCount(kMaxParticles, gMass);
   const std::size_t before = gParts.count();
   gParts.spawn(gMass);
@@ -369,11 +341,6 @@ int runLogicSelftest() {
   keyCallback(nullptr, GLFW_KEY_Y, 0, GLFW_PRESS, 0);
   expect(gDiskTilt > 0.f, "tilt up");
 
-  // focal przez scroll + shift: symulacja callbacka
-  GLFWwindow* fake = nullptr;
-  (void)fake;
-  // bez okna scrollCallback potrzebuje glfwGetKey – pomijamy tu
-
   keyCallback(nullptr, GLFW_KEY_R, 0, GLFW_PRESS, 0);
   expect(nearly(gMass, 1.f) && nearly(gTimeScale, 1.f) && gLensing && !gPaused,
          "reset");
@@ -386,7 +353,7 @@ int runLogicSelftest() {
   return 1;
 }
 
-}  // namespace
+}
 
 long long ppmDiff(const char* a, const char* b) {
   std::ifstream fa(a, std::ios::binary), fb(b, std::ios::binary);
@@ -481,7 +448,6 @@ int main(int argc, char** argv) {
       last = now;
 
       if (guiTest) {
-        // sekwencja: warm -> shot lens on -> L off -> shot -> tilt -> shot -> koniec
         if (warm < 3) {
           ++warm;
         } else if (guiStep == 0) {
@@ -535,7 +501,6 @@ int main(int argc, char** argv) {
       shader.setInt("uDoppler", gDoppler);
       shader.setInt("uShowParts", gShowParts ? 1 : 0);
       shader.setInt("uPartCount", static_cast<int>(gParts.count()));
-      shader.setFloat("uFocal", gFocal);
       shader.setInt("uLensing", gLensing ? 1 : 0);
       shader.setFloat("uDiskRIn", gDiskRIn);
       shader.setFloat("uDiskROut", 12.0f);
@@ -567,7 +532,6 @@ int main(int argc, char** argv) {
     glDeleteVertexArrays(1, &quad);
 
     if (guiTest) {
-      // shot_01 lens on+help, shot_02 lens off, shot_03 tilt, shot_04 pause/doppler/parts
       const long long d12 = ppmDiff("shot_01.ppm", "shot_02.ppm");
       const long long d23 = ppmDiff("shot_02.ppm", "shot_03.ppm");
       const long long d34 = ppmDiff("shot_03.ppm", "shot_04.ppm");

@@ -2,11 +2,8 @@
 
 #include <string>
 
-// program GLSL: wczytanie z plikow, kompilacja, link
-
 class Shader {
 public:
-  // wczytuje vert+frag, kompiluje; rzuca runtime_error jak cos nie gra
   Shader(const std::string& vertPath, const std::string& fragPath);
   ~Shader();
 

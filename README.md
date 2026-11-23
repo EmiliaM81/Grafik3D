@@ -16,8 +16,6 @@ Poniżej jest opis jak to robiłam i jak działa - da się z tego opowiedzieć p
 Pokazuję efekty grawitacji wokół czarnej dziury. To nie jest prawdziwa ogólna teoria względności
 z uczelni - tylko model wizualny, żeby wyglądało wiarygodnie i chodziło płynnie na laptopie.
 
-Z sylabusa: OpenGL w czasie rzeczywistym, interakcja, shadery GLSL, dokumentacja. To jest.
-
 
 ## Jak to powstawało
 
